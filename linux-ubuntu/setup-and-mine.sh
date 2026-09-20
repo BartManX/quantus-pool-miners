@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Quantus miner setup + start for dual-NVIDIA Ubuntu rentals (CUDA).
+# Quantus miner setup + start for dual-NVIDIA Ubuntu rentals.
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -22,7 +22,7 @@ if ! command -v nvidia-smi >/dev/null; then
 fi
 nvidia-smi -L
 GPU_COUNT=$(nvidia-smi -L | wc -l)
-if (( GPU_COUNT < GPU_DEVICES )); then
+if (( GPU_DEVICES > 0 && GPU_COUNT < GPU_DEVICES )); then
   echo "Only $GPU_COUNT GPU(s) visible; lowering GPU_DEVICES to match."
   GPU_DEVICES=$GPU_COUNT
 fi
@@ -35,11 +35,7 @@ if [[ ! -x ./quantus-miner ]]; then
   chmod +x quantus-miner
 fi
 
-# Resolve hostname -> IP if POOL_IP unset (miner SocketAddr rejects DNS names)
-if [[ -z "${POOL_IP:-}" ]]; then
-  POOL_IP=$(getent ahostsv4 mine.miningcrypto.online 2>/dev/null | awk '{print $1; exit}')
-  POOL_IP=${POOL_IP:-40.160.89.50}
-fi
+POOL_IP=${POOL_IP:-40.160.89.50}
 NODE_ADDR="${POOL_IP}:${POOL_PORT}"
 
 echo "==> Fetching pool TLS pin"
@@ -51,7 +47,7 @@ echo "==> Pool status"
 if command -v python3 >/dev/null; then
   curl -fsSL "${POOL_API}/api/pool" | python3 -c 'import sys,json; d=json.load(sys.stdin); print("job:", d.get("current_job_id"), "diff:", d.get("network_difficulty"), "miners:", d.get("connected_miners"))' || true
 else
-  curl -fsSL "${POOL_API}/api/pool" || true
+  curl -fsS "${POOL_API}/api/pool" || true
   echo
 fi
 
@@ -65,10 +61,13 @@ ARGS=(
   --metrics-port 9900
   -v
 )
-if [[ "${USE_CUDA}" == "1" ]]; then
+if [[ "${USE_CUDA}" == "1" && "$GPU_DEVICES" -gt 0 ]]; then
   ARGS+=(--cuda-gpu)
 fi
 
+export RUST_BACKTRACE="${RUST_BACKTRACE:-1}"
+
 echo "==> Starting miner: GPUs=${GPU_DEVICES} CUDA=${USE_CUDA} CPU=${CPU_WORKERS}"
 echo "    auth=$(cat addr.txt)  pool=${NODE_ADDR}"
+echo "    If this Aborts, set USE_CUDA=0 or GPU_DEVICES=0 in config.env and re-run."
 exec ./quantus-miner "${ARGS[@]}"
