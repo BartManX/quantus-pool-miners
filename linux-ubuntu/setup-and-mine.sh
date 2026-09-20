@@ -35,17 +35,29 @@ if [[ ! -x ./quantus-miner ]]; then
   chmod +x quantus-miner
 fi
 
+# Resolve hostname -> IP if POOL_IP unset (miner SocketAddr rejects DNS names)
+if [[ -z "${POOL_IP:-}" ]]; then
+  POOL_IP=$(getent ahostsv4 mine.miningcrypto.online 2>/dev/null | awk '{print $1; exit}')
+  POOL_IP=${POOL_IP:-40.160.89.50}
+fi
+NODE_ADDR="${POOL_IP}:${POOL_PORT}"
+
 echo "==> Fetching pool TLS pin"
 curl -fsSL "${POOL_API}/api/tls-pin" | tr -d '\n' > pin.txt
 echo >> pin.txt
 echo "${PAYOUT_ADDRESS}.${WORKER_NAME}" > addr.txt
 
 echo "==> Pool status"
-curl -fsSL "${POOL_API}/api/pool" | python3 -c 'import sys,json; d=json.load(sys.stdin); print("job:", d.get("current_job_id"), "diff:", d.get("network_difficulty"), "miners:", d.get("connected_miners"))' || true
+if command -v python3 >/dev/null; then
+  curl -fsSL "${POOL_API}/api/pool" | python3 -c 'import sys,json; d=json.load(sys.stdin); print("job:", d.get("current_job_id"), "diff:", d.get("network_difficulty"), "miners:", d.get("connected_miners"))' || true
+else
+  curl -fsSL "${POOL_API}/api/pool" || true
+  echo
+fi
 
 ARGS=(
   serve
-  --node-addr "${POOL_HOST}:${POOL_PORT}"
+  --node-addr "$NODE_ADDR"
   --auth-token-file addr.txt
   --tls-cert-sha256-file pin.txt
   --gpu-devices "$GPU_DEVICES"
@@ -58,5 +70,5 @@ if [[ "${USE_CUDA}" == "1" ]]; then
 fi
 
 echo "==> Starting miner: GPUs=${GPU_DEVICES} CUDA=${USE_CUDA} CPU=${CPU_WORKERS}"
-echo "    auth=$(cat addr.txt)  pool=${POOL_HOST}:${POOL_PORT}"
+echo "    auth=$(cat addr.txt)  pool=${NODE_ADDR}"
 exec ./quantus-miner "${ARGS[@]}"

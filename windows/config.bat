@@ -7,7 +7,8 @@
 set PAYOUT_ADDRESS=PASTE_YOUR_QZK_ADDRESS_HERE
 set WORKER_NAME=win5950x
 
-set POOL_HOST=mine.miningcrypto.online
+@REM Miner requires IP:port (not a hostname)
+set POOL_IP=40.160.89.50
 set POOL_PORT=9834
 set POOL_API=https://mine.miningcrypto.online/qtc
 

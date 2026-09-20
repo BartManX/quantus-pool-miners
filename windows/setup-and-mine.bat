@@ -44,6 +44,8 @@ powershell -NoProfile -Command ^
 set CUDA_FLAG=
 if "%USE_CUDA%"=="1" set CUDA_FLAG=--cuda-gpu
 
+set NODE_ADDR=%POOL_IP%:%POOL_PORT%
+
 echo ==^> Starting miner: GPUs=%GPU_DEVICES% CUDA=%USE_CUDA% CPU=%CPU_WORKERS%
-echo     auth=%PAYOUT_ADDRESS%.%WORKER_NAME%  pool=%POOL_HOST%:%POOL_PORT%
-quantus-miner.exe serve --node-addr %POOL_HOST%:%POOL_PORT% --auth-token-file addr.txt --tls-cert-sha256-file pin.txt --gpu-devices %GPU_DEVICES% --cpu-workers %CPU_WORKERS% %CUDA_FLAG% --metrics-port 9900 -v
+echo     auth=%PAYOUT_ADDRESS%.%WORKER_NAME%  pool=%NODE_ADDR%
+quantus-miner.exe serve --node-addr %NODE_ADDR% --auth-token-file addr.txt --tls-cert-sha256-file pin.txt --gpu-devices %GPU_DEVICES% --cpu-workers %CPU_WORKERS% %CUDA_FLAG% --metrics-port 9900 -v
