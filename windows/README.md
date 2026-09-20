@@ -1,13 +1,16 @@
-# Quantus — Windows 11 (RTX 3060 12GB + Ryzen 9 5950X)
+# Windows 11 (RTX 3060 12GB + Ryzen 9 5950X)
 
-1. Copy this folder to the Windows box.
-2. Edit `config.bat` → set `PAYOUT_ADDRESS` to your `qz…` wallet address.
-3. Optional: double-click `benchmark.bat` (CUDA smoke test).
-4. Double-click `setup-and-mine.bat`.
+1. Edit `config.bat` → set `PAYOUT_ADDRESS=qz...`
+2. Run `setup-and-mine.bat` (GPU via wgpu, `USE_CUDA=0`)
 
-Pool: `mine.miningcrypto.online:9834` (UDP/QUIC)  
-API: https://mine.miningcrypto.online/qtc/api/pool  
+## If the window closes / returns to the prompt right away
 
-Defaults: `--cuda-gpu --gpu-devices 1 --cpu-workers 8`. Set `CPU_WORKERS=0` in `config.bat` for GPU-only.
+`--cuda-gpu` is crashing. Use CPU-only:
 
-Needs current NVIDIA drivers (`nvidia-smi` works in Command Prompt).
+```bat
+mine-cpu.bat
+```
+
+Or in `config.bat` set `USE_CUDA=0` (default now) and re-run `setup-and-mine.bat`.
+
+Pool address must be IP: `40.160.89.50:9834`.

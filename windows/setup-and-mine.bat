@@ -42,10 +42,15 @@ powershell -NoProfile -Command ^
   "try { (Invoke-RestMethod '%POOL_API%/api/pool') | Select-Object current_job_id,network_difficulty,connected_miners | Format-List } catch { $_.Exception.Message }"
 
 set CUDA_FLAG=
-if "%USE_CUDA%"=="1" set CUDA_FLAG=--cuda-gpu
+if "%USE_CUDA%"=="1" if not "%GPU_DEVICES%"=="0" set CUDA_FLAG=--cuda-gpu
 
 set NODE_ADDR=%POOL_IP%:%POOL_PORT%
+set RUST_BACKTRACE=1
 
 echo ==^> Starting miner: GPUs=%GPU_DEVICES% CUDA=%USE_CUDA% CPU=%CPU_WORKERS%
 echo     auth=%PAYOUT_ADDRESS%.%WORKER_NAME%  pool=%NODE_ADDR%
+echo     If this returns to the prompt immediately, run mine-cpu.bat instead.
 quantus-miner.exe serve --node-addr %NODE_ADDR% --auth-token-file addr.txt --tls-cert-sha256-file pin.txt --gpu-devices %GPU_DEVICES% --cpu-workers %CPU_WORKERS% %CUDA_FLAG% --metrics-port 9900 -v
+echo.
+echo Miner exited with code %ERRORLEVEL%
+pause
