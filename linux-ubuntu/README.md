@@ -26,3 +26,24 @@ bash setup-and-mine.sh
 ```
 
 Pool must be `IP:port` (`40.160.89.50:9834`) — hostnames are rejected by the miner.
+
+## Copy-paste (if script still Aborts)
+
+```bash
+cd /quantus-pool-miners/linux-ubuntu
+git pull
+curl -fsSL -o quantus-miner https://github.com/Quantus-Network/quantus-miner/releases/download/v4.2.0/quantus-miner-linux-x86_64
+chmod +x quantus-miner
+curl -fsSL https://mine.miningcrypto.online/qtc/api/tls-pin | tr -d '\n' > pin.txt; echo >> pin.txt
+echo 'qzojnFaBDDzqDo7Jr26C64H5by5eBigZYz2ky2eCJeepWkgxq.rental9950x' > addr.txt
+
+# CPU only — should stay running and show "Received job"
+./quantus-miner serve \
+  --node-addr 40.160.89.50:9834 \
+  --auth-token-file addr.txt \
+  --tls-cert-sha256-file pin.txt \
+  --cpu-workers 16 \
+  --gpu-devices 0 \
+  --metrics-port 9900 \
+  -v
+```
